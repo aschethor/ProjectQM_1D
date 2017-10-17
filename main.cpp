@@ -1,6 +1,5 @@
-#include <iostream>
-#include <vector>
-#include <math.h>
+
+#include "utility.cpp"
 
 using namespace std;
 
@@ -8,54 +7,6 @@ double w = 1;
 double m = 10;
 double h_bar = 1;
 double beta = 10;
-
-double drand(){
-    return ((double) rand() / (RAND_MAX));
-}
-
-vector<double> add(vector<double>& a,vector<double>& b){
-    vector<double> ret(a.size());
-    for(int i=0;i<a.size();i++){
-        ret[i]=a[i]+b[i];
-    }
-    return ret;
-}
-
-vector<double> multiply(vector<double> a,double b){
-    vector<double> ret(a.size());
-    for(int i=0;i<a.size();i++){
-        ret[i]=a[i]*b;
-    }
-    return ret;
-}
-
-vector<double> multiply(vector<double> a,vector<double> b){
-    vector<double> ret(a.size());
-    for(int i=0;i<a.size();i++){
-        ret[i]=a[i]*b[i];
-    }
-    return ret;
-}
-
-double sum(vector<double> a){
-    double ret = 0;
-    for(int i=0;i<a.size();i++){
-        ret+=a[i];
-    }
-    return ret;
-}
-
-double avrg(vector<double> a){
-    return sum(a)/a.size();
-}
-
-void print(vector<double> v){
-    cout<<"[ ";
-    for(int i=0;i<v.size();i++){
-        cout<<v[i]<<" ";
-    }
-    cout<<"]";
-}
 
 /**
  *
@@ -69,12 +20,12 @@ vector<vector<double >> MCMC(
         vector<double> init,
         vector<double> alpha,
         int nSteps){
-    vector<vector<double>> ret;
+    vector<vector<double>> MChain;
     vector<double> last = init;
     double p_last = p(last);
-    int N = init.size();
+    int nBeads = init.size();
     for(int i=0;i<nSteps;i++){
-        for(int j=0;j<N;j++){
+        for(int j=0;j<nBeads;j++){
             vector<double> next = last;
             next[j] += alpha[j]*(-1+2*drand());
             double p_next = p(next);
@@ -82,10 +33,10 @@ vector<vector<double >> MCMC(
                 p_last = p_next;
                 last = next;
             }
-            ret.push_back(last);
+            MChain.push_back(last);
         }
     }
-    return ret;
+    return MChain;
 }
 
 double average(vector<vector<double>> values){
@@ -106,11 +57,21 @@ double averageOfSquares(vector<vector<double>> values){
     return avrg(sum)/values.size();
 }
 
+/**
+ * potential as a function of position x (will be used in probability function p)
+ * @param x 
+ * @return 
+ */
 double V(double x){
-    //return w*0.001*(x-1)*(x-1)*(x+1)*(x+1);
-    return w*x*x;
+    return w*1*(x-1)*(x-1)*(x+1)*(x+1);
+    //return w*x*x;
 }
 
+/**
+ * probability to observe system in state with beads at given positions
+ * @param positions vector of bead positions
+ * @return
+ */
 double p(vector<double> positions){
     double epsilon = beta/positions.size();
     int N = positions.size();
@@ -131,20 +92,32 @@ double p(vector<double> positions){
 
 int main() {
     srand( (unsigned int)( time(NULL) ) );
-    int nSteps = 10000;
-    int N = 1;//number of "beeds"
-    double alpha = 1;
+    
+    //set up number of steps, number of beads, initial values, delta
+    int nSteps = 100000;
+    int N = 1;//number of "beads"
+    double delta = 1;
     vector<double> init(N);
-    vector<double> v_alpha(N);
+    vector<double> v_delta(N);
     for(int i=0;i<N;i++){
         init[i]=0;
-        v_alpha[i]=alpha;
+        v_delta[i]=delta;
     }
-    vector<vector<double>> MCserie = MCMC(&p,init,v_alpha,nSteps);
-    /*for(int i=0;i<MCserie.size();i++){
-        print(MCserie[i]);
-        printf("\n");
-    }*/
+    
+    //calculate markov chain
+    vector<vector<double>> MCserie = MCMC(&p,init,v_delta,nSteps);
+    
+    //save markov chain into file
+    ofstream myfile;
+    myfile.open ("/home/aschethor/Desktop/doubleWelloutput.csv");
+    for(int i=0;i<MCserie.size();i++){
+        for(int j=0;j<MCserie[i].size();j++){
+            myfile<<""<<MCserie[i][j]<<endl;
+        }
+    }
+    myfile.close();
+    
+    //print out averages
     printf("  N   = %d\n",N);
     printf(" <X>  = %f\n",average(MCserie));
     printf("<X*X> = %f\n",averageOfSquares(MCserie));
