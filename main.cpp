@@ -4,7 +4,7 @@
 using namespace std;
 
 double w = 1;
-double m = 10;
+double m = 1;
 double h_bar = 1;
 double beta = 10;
 
@@ -63,8 +63,8 @@ double averageOfSquares(vector<vector<double>> values){
  * @return 
  */
 double V(double x){
-    return w*1*(x-1)*(x-1)*(x+1)*(x+1);
-    //return w*x*x;
+    //return w*1*(x-1)*(x-1)*(x+1)*(x+1);
+    return m*w*w/2*x*x;
 }
 
 /**
@@ -94,8 +94,8 @@ int main() {
     srand( (unsigned int)( time(NULL) ) );
     
     //set up number of steps, number of beads, initial values, delta
-    int nSteps = 100000;
-    int N = 1;//number of "beads"
+    int nSteps = 10000;
+    int N = 10;//number of "beads"
     double delta = 1;
     vector<double> init(N);
     vector<double> v_delta(N);
@@ -109,11 +109,18 @@ int main() {
     
     //save markov chain into file
     ofstream myfile;
-    myfile.open ("/home/aschethor/Desktop/doubleWelloutput.csv");
-    for(int i=0;i<MCserie.size();i++){
-        for(int j=0;j<MCserie[i].size();j++){
-            myfile<<""<<MCserie[i][j]<<endl;
+    myfile.open ("/home/aschethor/Desktop/Uni/11. Semester/Project CQM/doubleWelloutput_qm.csv");
+    for(int i=0;i<MCserie.size();){
+        double avrg = 0;
+        for(int k=0;k<N;k++) {
+            for (int j = 0; j < N; j++) {
+                avrg += MCserie[i][j];
+                myfile<<""<<MCserie[i][j]<<endl;
+            }
+            i++;
         }
+        avrg=avrg/N/N;
+        //myfile<<""<<avrg<<endl; //averages classical?!
     }
     myfile.close();
     
